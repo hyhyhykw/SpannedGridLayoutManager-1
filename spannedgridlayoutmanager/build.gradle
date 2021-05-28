@@ -2,61 +2,14 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'org.jetbrains.dokka-android'
 
-task dokkaJavadoc(type: org.jetbrains.dokka.gradle.DokkaAndroidTask) {
-    delete "$rootDir/docs"
-
-    outputFormat = 'html'
-    outputDirectory = "$rootDir/docs"
-
-    externalDocumentationLink {
-        url = new URL("https://developer.android.com/reference/")
-    }
-
-    includeNonPublic = false
-
-    // Always recreate documentation
-    outputs.upToDateWhen { return false }
-}
-
-afterEvaluate {
-    if (project.hasProperty("javadocJar")) {
-        tasks.javadocJar.dependsOn dokkaJavadoc
-    }
-}
-
-ext {
-    bintrayRepo = 'maven'
-    bintrayName = 'spannedgridlayoutmanager'
-
-    publishedGroupId = 'com.arasthel'
-    libraryName = 'SpannedGridLayoutManager'
-    artifact = 'spannedgridlayoutmanager'
-
-    libraryDescription = 'A layout manager that will resize and reorder views based on a provided SpanSize.'
-
-    siteUrl = 'https://github.com/Arasthel/SpannedGridLayoutManager'
-    gitUrl = 'https://github.com/Arasthel/SpannedGridLayoutManager.git'
-
-    libraryVersion = '3.0.2'
-
-    developerId = 'Arasthel'
-    developerName = 'Jorge Martín Epsinosa'
-    developerEmail = 'jorgemartinespinosa@gmail.com'
-
-    licenseName = 'MIT'
-    licenseUrl = 'https://opensource.org/licenses/MIT'
-    allLicenses = ["MIT"]
-}
-
 android {
-    compileSdkVersion 28
-    buildToolsVersion buildtools_version
+    compileSdkVersion 30
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 28
+        minSdkVersion 21
+        targetSdkVersion 30
         versionCode 1
-        versionName libraryVersion
+        versionName '1.0.0'
     }
     buildTypes {
         release {
@@ -66,15 +19,45 @@ android {
     }
 }
 
-tasks.withType(Javadoc) {
-    excludes = ['**/*.kt']
-}
 
 dependencies {
-    implementation "com.android.support:recyclerview-v7:$support_library_version"
+    implementation 'androidx.recyclerview:recyclerview:1.2.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 
-// Bintray Upload
-apply from: '../gradle/tools/bintrayv1.gradle'
-apply from: '../gradle/tools/installv1.gradle'
+
+apply plugin: 'com.github.dcendents.android-maven' // 添加这个
+group='com.github.hyhyhykw'	// 指定group，com.github.<用户名>
+
+
+// 指定编码
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+// 打包源码
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+
+    archiveClassifier.set('sources')
+//    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    failOnError  false
+    source = android.sourceSets.main.java.sourceFiles
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    classpath += configurations.compile
+}
+
+// 制作文档(Javadoc)
+task javadocJar(type: Jar, dependsOn: javadoc) {
+//    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}

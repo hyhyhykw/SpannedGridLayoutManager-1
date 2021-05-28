@@ -8,14 +8,13 @@ import android.graphics.PointF
 import android.graphics.Rect
 import android.os.Parcel
 import android.os.Parcelable
-import android.support.v7.widget.LinearSmoothScroller
-import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.util.SparseArray
 import android.view.View
+import androidx.recyclerview.widget.RecyclerView
 
 /**
- * A [android.support.v7.widget.RecyclerView.LayoutManager] which layouts and orders its views
+ * A [androidx.recyclerview.widget.RecyclerView.LayoutManager] which layouts and orders its views
  * based on width and height spans.
  *
  * @param orientation Whether the views will be layouted and scrolled in vertical or horizontal
@@ -530,7 +529,17 @@ open class SpannedGridLayoutManager(val orientation: Orientation,
         val paddingEndLayout = getPaddingEndForOrientation()
 
         val start = 0
-        val end = layoutEnd + rectsHelper.itemSize + paddingEndLayout
+
+        var end = 0
+        for (i in (state.itemCount - 1) downTo 0) {
+            val rect = childFrames[state.itemCount - 1]
+            if (rect != null) {
+                end = rect.right + paddingEndLayout
+                break
+            }
+        }
+
+//        val end = layoutEnd + rectsHelper.itemSize + paddingEndLayout
 
         scroll -= distance
 
@@ -543,10 +552,16 @@ open class SpannedGridLayoutManager(val orientation: Orientation,
         }
 
         // Correct scroll if it would make the layout scroll out of bounds at the end
-        if (scroll + size > end && (firstVisiblePosition + childCount + spans) >= state.itemCount) {
+        if (end != 0 && scroll + size > end && (firstVisiblePosition + childCount + spans) >= state.itemCount){
             correctedDistance -= (end - scroll - size)
             scroll = end - size
         }
+
+
+//        if (scroll + size > end && (firstVisiblePosition + childCount + spans) >= state.itemCount) {
+//            correctedDistance -= (end - scroll - size)
+//            scroll = end - size
+//        }
 
         if (orientation == Orientation.VERTICAL) {
             offsetChildrenVertical(correctedDistance)
@@ -564,7 +579,7 @@ open class SpannedGridLayoutManager(val orientation: Orientation,
     }
 
     override fun smoothScrollToPosition(recyclerView: RecyclerView, state: RecyclerView.State, position: Int) {
-        val smoothScroller = object: LinearSmoothScroller(recyclerView.context) {
+        val smoothScroller = object: androidx.recyclerview.widget.LinearSmoothScroller(recyclerView.context) {
 
             override fun computeScrollVectorForPosition(targetPosition: Int): PointF? {
                 if (childCount == 0) {
@@ -576,7 +591,7 @@ open class SpannedGridLayoutManager(val orientation: Orientation,
             }
 
             override fun getVerticalSnapPreference(): Int {
-                return LinearSmoothScroller.SNAP_TO_START
+                return SNAP_TO_START
             }
         }
 
